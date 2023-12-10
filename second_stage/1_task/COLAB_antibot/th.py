@@ -55,32 +55,6 @@ def find_captcha():
             else: find = True
                 
          
-# def video():
-#     global stop_thread
-#     global find
-    
-#     resolution = (1920, 1080)
-#     codec = cv2.VideoWriter_fourcc(*"XVID")
-#     filename = "second_stage/1_task/COLAB_antibot/Recording.avi"
-#     fps = 60.0
-#     out = cv2.VideoWriter(filename, codec, fps, resolution)
-
-#     while True:
-        
-#         img = pyautogui.screenshot()
-#         frame = np.array(img)
-#         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-#         out.write(frame)
-
-#         if cv2.waitKey(1) == ord('q'):
-#             break
-
-#         if stop_thread:
-#             find = True
-#             break
-
-#     out.release()
-#     cv2.destroyAllWindows()
 
 
 
