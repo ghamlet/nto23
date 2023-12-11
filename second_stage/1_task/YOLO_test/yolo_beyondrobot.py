@@ -65,12 +65,18 @@ for pos in range(len(files)):
                         tracking_objects[track_id] = pt
                         track_id +=1
         else:
-            for pt in center_points_cur_frame:
-                for object_id, pt2 in tracking_objects.items():
+            for object_id, pt2 in tracking_objects.copy().items():
+                object_exists = False
+
+                for pt in center_points_cur_frame: 
                     distance = math.hypot(pt2[0] - pt[0], pt2[1]  -pt[1])
                     if distance < 150:
                         tracking_objects[object_id] = pt
+                        object_exists = True
+                        continue
 
+                if not object_exists:
+                    tracking_objects.pop(object_id)
 
         for object_id, pt in tracking_objects.items():
             cv2.circle(frame, pt, 5, (255,0,255), -1)
