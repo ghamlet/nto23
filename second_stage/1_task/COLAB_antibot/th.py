@@ -44,7 +44,7 @@ def find_captcha():
 
                     cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
                     cv2.imwrite("ver.jpg", frame)
-                    time.sleep(300)
+                    
                     pyautogui.moveTo(x+25, y+33,3)
                     pyautogui.click()
         
