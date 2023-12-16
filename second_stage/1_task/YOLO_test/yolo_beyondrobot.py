@@ -52,15 +52,6 @@ for pos in range(len(files)):
 
         class_ids, scores, boxes = model.detect(frame, Conf_threshold, NMS_threshold)
 
-        
-        # if cur_cars >= prev_cars:
-        #     cars += cur_cars - prev_cars
-        #     prev_cars = cur_cars
-        # else:
-            
-        #     prev_cars = cur_cars
-
-
         for box in boxes:
             
             (x,y,w,h) = box
@@ -74,35 +65,61 @@ for pos in range(len(files)):
 
         
 
-
-         
-       
-        
-
-
-
         cur_len = len(boxes)
-        if cur_len > prev_len:
-            for i in range(cur_len - prev_len):
-                tracking_objects[track_id] = center_points_cur_frame[i]
-                track_id +=1
-            prev_len = cur_len
+        if cur_len > prev_len: #появилась машина
+            if count_frame == 1: #на первом кадре не с чем сопоставить текущий кадр поэтому все найденные машины добавляем в детекшэн
+                for i in range(cur_len - prev_len):
+                    #должны проверить прошлые координаты и добавить в tracking_objects машину которой нет на прошлом кадре
+                    
+                        tracking_objects[track_id] = center_points_cur_frame[i]
+                        track_id +=1
+                
+            else:
+                
+                for cur_pt in center_points_cur_frame:
+                    for prev_pt in center_points_prev_frame:
+                        
+                        distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
+                        if distance < 150: #нашлась пара координат из текущего кадра и прошлого
+                            #надо перезаписать трекинг
+                            for k, val in tracking_objects.copy().items():
+                                if val == prev_pt:
+                                    tracking_objects[k] = cur_pt
+                            
+                print(tracking_objects)
+                for item in center_points_cur_frame:
+                    
+                    if item not in tracking_objects.values():
+                        tracking_objects[track_id] = item
+                        track_id+=1
+
+            prev_len = cur_len          
+
+
+        elif cur_len == prev_len: #надо проерить одни и теже ли это машины
+            if cur_len != 0: #если кадры пустые то скипаем
+                for cur_pt in center_points_cur_frame:
+                    for prev_pt in center_points_prev_frame:
+                        
+                        distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
+                        if distance < 150:
+                            for key, value in tracking_objects.copy().items():
+                                if value == prev_pt:
+                                    tracking_objects[key] = cur_pt
+
+
+
+                
+
 
         elif cur_len < prev_len: 
             for k, val in tracking_objects.items():
                 if val not in center_points_cur_frame:
+                    print("ghjk")
                             
                     center_points_cur_frame.append(val)
            
-        for cur_pt in center_points_cur_frame:
-            for prev_pt in center_points_prev_frame:
-                
-                distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
-                
-                if distance < 150: #если машина таже самая то нужно перезаписать координаты 
-                    for key, value in tracking_objects.copy().items():
-                        if value == prev_pt:
-                            tracking_objects[key] = cur_pt        
+            prev_len = cur_len       
                  
 
 
@@ -122,8 +139,8 @@ for pos in range(len(files)):
         center_points_prev_frame = center_points_cur_frame.copy()
 
 
-        resize = cv2.resize(frame, (640,640))
-        cv2.imshow("frame", resize)
+        frame = cv2.resize(frame, (640,640))
+        cv2.imshow("frame", frame)
 
         key = cv2.waitKey(0)
         if key == ord("q"):
