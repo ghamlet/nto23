@@ -112,14 +112,21 @@ for pos in range(len(files)):
                 
 
 
-        elif cur_len < prev_len: 
-            for k, val in tracking_objects.items():
-                if val not in center_points_cur_frame:
-                    print("ghjk")
-                            
-                    center_points_cur_frame.append(val)
-           
-            prev_len = cur_len       
+        elif cur_len < prev_len: #забыл добавить трекинг
+            for cur_pt in center_points_cur_frame:
+                for prev_pt in center_points_prev_frame:
+                    
+                    distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
+                    if distance < 150:
+                        for key, value in tracking_objects.copy().items():
+                            if value == prev_pt:
+                                tracking_objects[key] = cur_pt
+
+            for item in tracking_objects.values():    
+                if item not in center_points_cur_frame:
+                    center_points_cur_frame.append(item)
+            
+            prev_len = len(center_points_cur_frame)       
                  
 
 
