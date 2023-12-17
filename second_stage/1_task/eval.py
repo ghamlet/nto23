@@ -17,6 +17,7 @@ def load_models():
 
 
 def count_vehicles(video, models):
+    
     model = models[0]
 
     count_frame = 0
@@ -147,7 +148,7 @@ def count_vehicles(video, models):
 
         center_points_prev_frame = center_points_cur_frame.copy()
 
-
+  
     cars = track_id -1
     print(cars)
     return cars

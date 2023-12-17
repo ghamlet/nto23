@@ -20,7 +20,7 @@ def main():
     correct = 0
     for i, row in enumerate(data.itertuples()):
         row_id, video_filename, real_answer = row
-       
+        
         video = cv2.VideoCapture(video_filename)
 
         user_answer = submission.count_vehicles(video, models) 
