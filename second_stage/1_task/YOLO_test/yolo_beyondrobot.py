@@ -4,13 +4,11 @@ import math
 
 import os
 
-Conf_threshold = 0.2
-NMS_threshold = 0.2
 
 
 
-config_path = "second_stage/1_task/YOLO_test/object-detection/cfg/yolov4-tiny-obj.cfg"  # конфигурация нейронной сети
-weights_path = "second_stage/1_task/YOLO_test/object-detection/data/yolov4-tiny-obj_best.weights"
+config_path = "second_stage/1_task/YOLO_test/object-detection/cfg/yolov4tiny.cfg"  # конфигурация нейронной сети
+weights_path = "second_stage/1_task/YOLO_test/object-detection/data/yolov4tiny.weights"
 
 
 net = cv2.dnn.readNetFromDarknet( config_path,weights_path)
@@ -50,7 +48,7 @@ for pos in range(len(files)):
         count_frame+=1
         center_points_cur_frame = []
 
-        class_ids, scores, boxes = model.detect(frame, Conf_threshold, NMS_threshold)
+        class_ids, scores, boxes = model.detect(frame, 0.2, 0.2)
 
         for box in boxes:
             
@@ -79,7 +77,7 @@ for pos in range(len(files)):
                 for cur_pt in center_points_cur_frame:
                     for prev_pt in center_points_prev_frame:
                         
-                        distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
+                        distance =  ((prev_pt[0] - cur_pt[0])**2 + (prev_pt[1]  -cur_pt[1])**2 )**(1/2)
                         if distance < 150: #нашлась пара координат из текущего кадра и прошлого
                             #надо перезаписать трекинг
                             for k, val in tracking_objects.copy().items():
@@ -97,34 +95,70 @@ for pos in range(len(files)):
 
 
         elif cur_len == prev_len: #надо проерить одни и теже ли это машины
+            distances = []
             if cur_len != 0: #если кадры пустые то скипаем
                 for cur_pt in center_points_cur_frame:
+                    #если текущая машина не законекнится ни с кем с прошлого кадра то эта машина новая
+                    must_find = 0
                     for prev_pt in center_points_prev_frame:
-                        
-                        distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
-                        if distance < 150:
-                            for key, value in tracking_objects.copy().items():
-                                if value == prev_pt:
-                                    tracking_objects[key] = cur_pt
+                        #обноовляем позиции машин в трекере
+                        distance = ((prev_pt[0] - cur_pt[0])**2 + (prev_pt[1]  -cur_pt[1])**2 )**(1/2)
+                        if distance < 150: #машинка нашла себе пару
+                            must_find = 0
+                            distances.append(distance)
+                            # for key, value in tracking_objects.copy().items():
+                            #     if value == prev_pt:
+                            #         tracking_objects[key] = cur_pt
+                        else: must_find +=1
+
+                    if must_find == cur_len: #если машина не нашла ни одной пары
+                        tracking_objects[track_id] = cur_pt
+                        track_id += 1
+
+                if len(distances) == cur_len:
+                    for cur_pt in center_points_cur_frame:
+                        for prev_pt in center_points_prev_frame:
+                            distance = ((prev_pt[0] - cur_pt[0])**2 + (prev_pt[1]  -cur_pt[1])**2 )**(1/2)
+                            if distance < 150:
+                                for key, value in tracking_objects.copy().items():
+                                    if value == prev_pt:
+                                        tracking_objects[key] = cur_pt
+                else:
+                    distances = sorted(distances) #сортируем чтобы найти первые расстояния
+                    #max_dist = distances[cur_len]
+                    for cur_pt in center_points_cur_frame:
+                        for prev_pt in center_points_prev_frame:
+                            distance = ((prev_pt[0] - cur_pt[0])**2 + (prev_pt[1]  -cur_pt[1])**2 )**(1/2)
+                            if distance in distances[0:cur_len]:
+                                for key, value in tracking_objects.copy().items():
+                                    if value == prev_pt:
+                                        tracking_objects[key] = cur_pt
 
 
-
-                
-
-
-        elif cur_len < prev_len: #забыл добавить трекинг
+        elif cur_len < prev_len:
             for cur_pt in center_points_cur_frame:
                 for prev_pt in center_points_prev_frame:
-                    
-                    distance = math.hypot(prev_pt[0] - cur_pt[0], prev_pt[1]  -cur_pt[1])
+                    #то что можем отследить
+                    distance = ((prev_pt[0] - cur_pt[0])**2 + (prev_pt[1]  -cur_pt[1])**2 )**(1/2)
                     if distance < 150:
                         for key, value in tracking_objects.copy().items():
                             if value == prev_pt:
+                                # if cur_pt[0] < 50:
+                                #     tracking_objects.pop(key)
+                                
                                 tracking_objects[key] = cur_pt
 
-            for item in tracking_objects.values():    
-                if item not in center_points_cur_frame:
-                    center_points_cur_frame.append(item)
+            for id, item in tracking_objects.copy().items():    
+                
+                if item not in center_points_cur_frame: #если машина исчезла на середине кадра то ее надо вернуть
+                    #проверяем пропавшая машина в центре кадра
+                    car_in_centr = True if (item[0] > 50 and item[0] < 1700) and (item[1] < 900 and item[1] > 100) else False
+                    if car_in_centr:
+                        center_points_cur_frame.append(item)
+                    else: #иначе она уехала насовсем
+                        tracking_objects.pop(id)
+
+                    
             
             prev_len = len(center_points_cur_frame)       
                  
@@ -146,7 +180,7 @@ for pos in range(len(files)):
         center_points_prev_frame = center_points_cur_frame.copy()
 
 
-        frame = cv2.resize(frame, (640,640))
+        #frame = cv2.resize(frame, (640,640))
         cv2.imshow("frame", frame)
 
         key = cv2.waitKey(0)

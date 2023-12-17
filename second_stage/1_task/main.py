@@ -11,8 +11,8 @@ import pandas as pd
 
 
 def main():
-    csv_file = "second_stage/1_task/annotations.csv"
-    data = pd.read_csv(csv_file, sep=',')  # TODO: check for , or ;
+    csv_file = "annotations.csv"
+    data = pd.read_csv(csv_file, sep=',')  
     data = data.sample(frac=1)
 
     models = submission.load_models()
@@ -21,9 +21,9 @@ def main():
     for i, row in enumerate(data.itertuples()):
         row_id, video_filename, real_answer = row
        
-        video = cv2.VideoCapture("C:/Users/max30/Desktop/" + video_filename)
+        video = cv2.VideoCapture(video_filename)
 
-        user_answer = submission.сount_vehicles(video, models) 
+        user_answer = submission.count_vehicles(video, models) 
 
         if real_answer == user_answer:
             correct += 1
