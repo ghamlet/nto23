@@ -149,6 +149,7 @@ def count_vehicles(video, models):
 
 
     cars = track_id -1
+    print(cars)
     return cars
         
 
